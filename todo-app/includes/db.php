@@ -1,9 +1,9 @@
 <?php
 // /includes/db.php
 $host = 'localhost';
-$db   = 'todo-app';
-$user = 'eto';
-$pass = 'eto_pass';
+$db   = '';
+$user = '';
+$pass = '';
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
