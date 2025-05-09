@@ -1,0 +1,351 @@
+/* ===== 共通設定 ===== */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #eef2f5;
+}
+
+input, button {
+  font-family: inherit;
+}
+
+a {
+  text-decoration: none;
+}
+
+/* ===== ヘッダー ===== */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 60px;
+  width: 100%;
+  background-color: #007bff;
+  color: white;
+  display: flex;
+  align-items: center;
+  z-index: 1000;
+}
+
+.header__inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.header__title {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.header__user {
+  font-size: 14px;
+}
+
+/* ===== サイドバー ===== */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 60px;
+  width: 200px;
+  height: calc(100vh - 60px);
+  background-color: #343a40;
+  padding-top: 20px;
+  box-sizing: border-box;
+}
+
+.sidebar__menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar__item {
+  margin-bottom: 10px;
+}
+
+.sidebar__link {
+  display: block;
+  padding: 12px 16px;
+  color: #fff;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.sidebar__link:hover {
+  background-color: #495057;
+}
+
+/* ===== ログイン画面 ===== */
+.login {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.login__box {
+  background: #fff;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+.login__title {
+  font-size: 24px;
+  margin-bottom: 24px;
+  text-align: center;
+  color: #333;
+}
+
+.login__error {
+  background-color: #ffdddd;
+  color: #d8000c;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+}
+
+.login__field {
+  margin-bottom: 20px;
+}
+
+.login__label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #555;
+}
+
+.login__input {
+  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.login__input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.login__button {
+  padding: 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.login__button:hover {
+  background-color: #0056b3;
+}
+
+/* ===== ToDo画面 ===== */
+.todo {
+  margin-left: 200px;
+  padding: 100px 20px 40px;
+  background-color: #eef2f5;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.todo__container {
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 600px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  margin: 0 auto;
+}
+
+.todo__title {
+  font-size: 24px;
+  margin-bottom: 24px;
+  text-align: center;
+  color: #333;
+}
+
+.todo__form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.todo__input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.todo__add-button {
+  background-color: #28a745;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.todo__add-button:hover {
+  background-color: #218838;
+}
+
+.todo__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.todo__item {
+  margin-bottom: 12px;
+}
+
+.todo__item-form {
+  display: flex;
+  gap: 8px;
+}
+
+.todo__edit-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.todo__update-button,
+.todo__delete-button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.todo__update-button {
+  background-color: #007bff;
+  color: white;
+}
+
+.todo__update-button:hover {
+  background-color: #0056b3;
+}
+
+.todo__delete-button {
+  background-color: #dc3545;
+  color: white;
+}
+
+.todo__delete-button:hover {
+  background-color: #c82333;
+}
+
+/* ===== パスワード変更画面もこの構成で追加可 ===== */
+/* ===== パスワード変更画面 ===== */
+.password {
+  margin-left: 200px;
+  padding: 100px 20px 40px;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background-color: #eef2f5;
+}
+
+.password__box {
+  background: #fff;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 500px;
+}
+
+.password__title {
+  font-size: 24px;
+  margin-bottom: 24px;
+  text-align: center;
+  color: #333;
+}
+
+.password__error {
+  background-color: #ffdddd;
+  color: #d8000c;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.password__success {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.password__form {
+  display: flex;
+  flex-direction: column;
+}
+
+.password__field {
+  margin-bottom: 20px;
+}
+
+.password__label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #555;
+}
+
+.password__input {
+  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.password__input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.password__button {
+  padding: 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.password__button:hover {
+  background-color: #0056b3;
+}
+
