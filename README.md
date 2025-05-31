@@ -93,7 +93,7 @@ openssl genrsa -aes256 -out private\cakey.pem 4096
 ```bash
 openssl req -new -x509 -days 3650 -key private\cakey.pem -out cacert.pem -config openssl.cnf
 ```
-
+色々と入力を求められますが、全部空白で問題ありません。
 * `cacert.pem` は自作の **ルートCA証明書** です
 
 ---
@@ -117,6 +117,12 @@ openssl ca -in server.csr -out server.crt -config openssl.cnf
 ---
 
 ## 🌐 ⑤ XAMPP に HTTPS を設定（例）
+###  SSL設定を有効にする
+httpd.confから下記のコードのコメントアウトを解除。
+
+Include conf/extra/httpd-ssl.conf
+
+### 証明書の設定
 C:\xampp\apache\conf\に `ssl` フォルダを作成し、生成した証明書をコピーします。
 * server.crt
 * server.key
@@ -135,6 +141,7 @@ C:\xampp\apache\conf\に `ssl` フォルダを作成し、生成した証明書�
 </VirtualHost>
 ```
 **⚠ServerName は　SANで設定した値**
+
 **⚠ あくまで一例です。ファイルパスは任意に設定してください。**
 
 ✔ Apache を**再起動**してください
