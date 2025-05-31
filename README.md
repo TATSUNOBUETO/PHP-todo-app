@@ -110,7 +110,8 @@ openssl req -new -key server.key -out server.csr -config openssl.cnf
 **⚠ SAN に `localhost` や `192.168.116.1` が入っていることが重要です。**
 * `server.csr` が生成されます。
 ```bash
-openssl ca -in server.csr -out server.crt -config openssl.cnf
+openssl x509 -req -in server.csr -CA cacert.pem -CAkey private/cakey.pem -CAcreateserial -out server.crt -days 3650 -extensions v3_req -extfile openssl.cnf
+
 ```
 * `server.crt` が生成されます。
 
