@@ -18,7 +18,7 @@ type nul > index.txt
 
 ## 📝 ② `openssl.cnf` の準備（CA 設定ファイル）
 
-`C:\xampp\myCA\openssl.cnf` を作成して以下のように記述します：
+`C:\xampp\myCA\openssl.cnf` を作成して以下のように記述します。
 
 ```ini
 [ ca ]
@@ -84,52 +84,64 @@ IP.2  = 192.168.192.1
 ---
 
 ## 🔐 ③ 認証局（CA）の秘密鍵と証明書の作成
-
+1. 秘密鍵の作成
 ```bash
 openssl genrsa -aes256 -out private\cakey.pem 4096
 ```
-* `証明書`のパスワード2回入力 。**⚠パスワードは今後も使用するのでどこかに保存すること。**
+証明書のパスワード2回入力 。
+**⚠パスワードは今後も使用するのでどこかに保存すること。** 
+
+2. 証明書の作成
 
 ```bash
 openssl req -new -x509 -days 3650 -key private\cakey.pem -out cacert.pem -config openssl.cnf
 ```
 色々と入力を求められますが、全部空白で問題ありません。
-* `cacert.pem` は自作の **ルートCA証明書** です
+
+`cacert.pem` は自作の **ルートCA証明書** です
 
 ---
 
-## 🖥️ ④ サーバー証明書（localhost 用）の作成
+## 🖥️ ④ サーバー証明書の作成
 
+1. 秘密鍵（server.key）の作成 
 ```bash
 openssl genrsa -out server.key 2048
 ```
-* `server.key` が生成されます。
+`server.key` が作成されます。
+
+2. 証明書署名要求（server.csr）の作成 
+
 ```bash
 openssl req -new -key server.key -out server.csr -config openssl.cnf
 ```
 **⚠ SAN に `localhost` や `192.168.116.1` が入っていることが重要です。**
-* `server.csr` が生成されます。
+
+`server.csr` が作成されます。
+
+3. サーバー証明書（server.crt）の作成（CA による署名）
+
 ```bash
 openssl x509 -req -in server.csr -CA cacert.pem -CAkey private/cakey.pem -CAcreateserial -out server.crt -days 3650 -extensions v3_req -extfile openssl.cnf
 
 ```
-* `server.crt` が生成されます。
+`server.crt` が作成されます。
 
 ---
 
 ## 🌐 ⑤ XAMPP に HTTPS を設定（例）
-###  SSL設定を有効にする
+1. ###  SSL設定を有効にする
 httpd.confから下記のコードのコメントアウトを解除。
 
-Include conf/extra/httpd-ssl.conf
+`Include conf/extra/httpd-ssl.conf`
 
-### 証明書の設定
+2. ### 証明書の設定
 C:\xampp\apache\conf\に `ssl` フォルダを作成し、生成した証明書をコピーします。
 * server.crt
 * server.key
 * cacert.pem
 
-### `httpd-ssl.conf` の編集（例）
+3. ### `httpd-ssl.conf` の編集（例）
 
 ```apache
 <VirtualHost _default_:443>
