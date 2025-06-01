@@ -182,34 +182,82 @@ C:\xampp\apache\conf\に `ssl` フォルダを作成し、生成した証明書�
 ### 📜 PEM ファイルから CA を読み込む方法
 
 ```csharp
-private X509Certificate2 LoadCaFromPem(string pemPath)
+using System;
+using System.Net.Http;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
+using System.IO;
+using System.Windows.Forms;
+
+namespace https_app
 {
-    var certPem = File.ReadAllText(pemPath);
-    string base64 = certPem
-        .Replace("-----BEGIN CERTIFICATE-----", "")
-        .Replace("-----END CERTIFICATE-----", "")
-        .Replace("\r", "")
-        .Replace("\n", "");
+    public partial class Form1 : Form
+    {
+        private X509Certificate2 _trustedCa;
+        public Form1()
+        {
+            InitializeComponent();
 
-    byte[] certBytes = Convert.FromBase64String(base64);
-    return new X509Certificate2(certBytes);
+            // PEMファイルからCA証明書を読み込む（OpenSSL形式に対応）
+            _trustedCa = LoadCaFromPem(@"C:\xampp\myCA\cacert.pem");
+        }
+
+        private  async void button1_Click(object sender, EventArgs e)
+        {
+            var handler = new HttpClientHandler();
+            //クライアントのOSにルート証明書がなくても_trustedCaで検証させる。
+            handler.ServerCertificateCustomValidationCallback = ValidateServerCertificate;
+
+            using (var client = new HttpClient(handler))
+            {
+                try
+                {
+                    string result = await client.GetStringAsync("https://192.168.116.1/");
+                    MessageBox.Show(result, "HTTPS Response");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Error");
+                }
+            }
+        }
+        private bool ValidateServerCertificate(HttpRequestMessage req, X509Certificate2 cert, X509Chain chain, SslPolicyErrors errors)
+        {
+            // 自作 CA をチェーンに追加
+            chain.ChainPolicy.ExtraStore.Add(_trustedCa);
+
+            // 証明書失効チェックを無効化（ローカル用）
+            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+
+            // 未知のルート（自己署名CA）を許可
+            chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+
+            // チェーンを構築
+            bool isValid = chain.Build(cert);
+
+            // チェーンの最上位（ルート）が自作CAと一致するか検証
+            var root = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
+            bool isTrusted = root.Thumbprint == _trustedCa.Thumbprint;
+
+            return isValid && isTrusted;
+        }
+        private X509Certificate2 LoadCaFromPem(string pemPath)
+        {
+            var certPem = File.ReadAllText(pemPath);
+
+            // PEM 形式から DER 形式に変換（Base64デコード）
+            string base64 = certPem
+                .Replace("-----BEGIN CERTIFICATE-----", "")
+                .Replace("-----END CERTIFICATE-----", "")
+                .Replace("\r", "")
+                .Replace("\n", "");
+
+            byte[] certBytes = Convert.FromBase64String(base64);
+            return new X509Certificate2(certBytes);
+        }
+    }
 }
-```
 
-### 🔒 サーバー証明書の検証ロジック
-
-```csharp
-private bool ValidateServerCertificate(HttpRequestMessage req, X509Certificate2 cert, X509Chain chain, SslPolicyErrors errors)
-{
-    chain.ChainPolicy.ExtraStore.Add(_trustedCa);
-    chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-    chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
-
-    bool isValid = chain.Build(cert);
-
-    var root = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
-    return isValid && root.Thumbprint == _trustedCa.Thumbprint;
-}
 ```
 
 > `_trustedCa` は `LoadCaFromPem()` で読み込んだ CA 証明書インスタンス
