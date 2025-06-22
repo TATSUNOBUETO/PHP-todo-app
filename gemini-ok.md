@@ -180,6 +180,77 @@
 
 本プロジェクトでは、各画面および共通機能において MVC パターンを適用します。
 
+  * **Model (データとビジネスロジック)**:
+
+      * 共通 Model と画面固有 Model に分かれます。
+      * **役割**: アプリケーションのデータ構造、ビジネスロジック、データ永続化（REST API との通信）を担当します。
+      * **実装**:
+          * REST API との通信は Model 層で行い、UIとは完全に分離します。
+          * ビジネスロジックは Model 内にカプセル化され、Controller から呼び出されます。
+          * 画面固有 Model は、その画面で必要となるデータ変換や計算ロジックなどを持ちます。
+          * データオリエンテッドの考えに基づき、AppModel のデータは変更通知メカニズムを持つように設計します。
+      * **悪い例 (Model が View を直接操作)**:
+        ```csharp
+        // Models/ProductModel.cs (悪い例: Model が View のコントロールを直接操作しようとする)
+        public class ProductModel
+        {
+            public Product GetProduct(string productId)
+            {
+                // REST API からデータを取得
+                // ...
+                // もしここで、MessageBox.Show("商品が見つかりません"); のようなUI操作を行うと、密結合になる
+                return new Product { Name = "Example Product" }; // 例
+            }
+        }
+        ```
+      * **良い例 (Model は純粋なビジネスロジックとデータアクセス)**:
+        *【例】インターフェースを定義したモデルクラスと実装クラス
+        ```csharp
+
+        // Models/IProductModel (依存性逆転の原則)
+        public interface IProductModel
+        {
+            Task<ProductDto> GetProductByIdAsync(string id);
+        }
+        
+        // Models/ProductModel.cs (良い例: Modelはデータとビジネスロジックに集中)
+        public class ProductModel : IProductModel
+        {
+            public async Task<Product> GetProductAsync(string productId)
+            {
+                // REST API 呼び出しはここで完結し、結果を返す
+                var productDto = await _productApiService.GetProductByIdAsync(productId);
+                if (productDto == null)
+                {
+                    // データが見つからない場合は null を返すなど、Model の責任範囲で完結
+                    return null;
+                }
+                return new Product { Id = productDto.Id, Name = productDto.Name, Price = productDto.Price };
+            }
+
+            // その他、商品に関するビジネスロジック
+            public decimal CalculateDiscountedPrice(Product product, decimal discountRate)
+            {
+                return product.Price * (1 - discountRate);
+            }
+        }
+
+        // Models/Dtos/ProductDto.cs (APIレスポンスのデータ構造)
+        public class ProductDto
+        {
+            public string Id { get; set; }
+            public string Name { get; set; }
+            public decimal Price { get; set; }
+        }
+
+        // Models/Entities/Product.cs (アプリケーション内のエンティティ)
+        public class Product
+        {
+            public string Id { get; set; }
+            public string Name { get; set; }
+            public decimal Price { get; set; }
+        }
+        ```
   * **View (UI)**:
 
       * `Form` クラスおよび `UserControl` クラスが View となります。
@@ -269,78 +340,6 @@
          }
      }
      ```
-
-  * **Model (データとビジネスロジック)**:
-
-      * 共通 Model と画面固有 Model に分かれます。
-      * **役割**: アプリケーションのデータ構造、ビジネスロジック、データ永続化（REST API との通信）を担当します。
-      * **実装**:
-          * REST API との通信は Model 層で行い、UIとは完全に分離します。
-          * ビジネスロジックは Model 内にカプセル化され、Controller から呼び出されます。
-          * 画面固有 Model は、その画面で必要となるデータ変換や計算ロジックなどを持ちます。
-          * データオリエンテッドの考えに基づき、AppModel のデータは変更通知メカニズムを持つように設計します。
-      * **悪い例 (Model が View を直接操作)**:
-        ```csharp
-        // Models/ProductModel.cs (悪い例: Model が View のコントロールを直接操作しようとする)
-        public class ProductModel
-        {
-            public Product GetProduct(string productId)
-            {
-                // REST API からデータを取得
-                // ...
-                // もしここで、MessageBox.Show("商品が見つかりません"); のようなUI操作を行うと、密結合になる
-                return new Product { Name = "Example Product" }; // 例
-            }
-        }
-        ```
-      * **良い例 (Model は純粋なビジネスロジックとデータアクセス)**:
-        *【例】インターフェースを定義したモデルクラスと実装クラス
-        ```csharp
-
-        // Models/IProductModel (依存性逆転の原則)
-        public interface IProductModel
-        {
-            Task<ProductDto> GetProductByIdAsync(string id);
-        }
-        
-        // Models/ProductModel.cs (良い例: Modelはデータとビジネスロジックに集中)
-        public class ProductModel : IProductModel
-        {
-            public async Task<Product> GetProductAsync(string productId)
-            {
-                // REST API 呼び出しはここで完結し、結果を返す
-                var productDto = await _productApiService.GetProductByIdAsync(productId);
-                if (productDto == null)
-                {
-                    // データが見つからない場合は null を返すなど、Model の責任範囲で完結
-                    return null;
-                }
-                return new Product { Id = productDto.Id, Name = productDto.Name, Price = productDto.Price };
-            }
-
-            // その他、商品に関するビジネスロジック
-            public decimal CalculateDiscountedPrice(Product product, decimal discountRate)
-            {
-                return product.Price * (1 - discountRate);
-            }
-        }
-
-        // Models/Dtos/ProductDto.cs (APIレスポンスのデータ構造)
-        public class ProductDto
-        {
-            public string Id { get; set; }
-            public string Name { get; set; }
-            public decimal Price { get; set; }
-        }
-
-        // Models/Entities/Product.cs (アプリケーション内のエンティティ)
-        public class Product
-        {
-            public string Id { get; set; }
-            public string Name { get; set; }
-            public decimal Price { get; set; }
-        }
-        ```
 
   * **Controller (制御)**:
 
@@ -695,7 +694,46 @@
 
 -----
 
-## 6\. まとめ
+### 6\. クラスファイルの記述上限値と粒度
+
+大規模プロジェクトでは、1つのクラスファイルが肥大化すると、可読性の低下、変更時の影響範囲の拡大、マージコンフリクトの増加など、様々な問題を引き起こします。これを防ぐため、以下のガイドラインを設けます。
+
+#### 6.1. 行数による上限値
+
+  * **View (`.cs` ファイル)**:
+      * **最大行数: 200行**（デザイナー生成コードを除く）
+      * **理由**: Viewのコードビハインドは、極力ロジックを持たず、UIとControllerの橋渡しに徹するため、通常は行数が多くなりません。200行を超える場合は、単一責任の原則に反していないか、不必要なロジックが含まれていないかを確認してください。`partial`クラスのもう一方（デザイナーが生成する部分）は、この行数に含めません。
+  * **Controller**:
+      * **最大行数: 300行**
+      * **理由**: ControllerはViewからのイベントハンドリングとModelへの指示が主な役割です。複雑な画面の場合でも、ロジックはModelやサービスに委譲するため、300行を超えた場合は、Controllerが過剰な責任を持っていないか、処理が複雑になりすぎていないかを確認し、責任を分割することを検討してください。
+  * **Model（具象クラス）**:
+      * **最大行数: 500行**
+      * **理由**: Modelはビジネスロジックやデータ操作を集中して担当するため、他の層よりも行数が多くなる傾向があります。しかし、500行を超えた場合は、そのModelが複数の独立したビジネスロジックを持っている可能性があります。その場合は、単一責任の原則に従い、別のModelクラスや専用のサービス（例: 計算専用の`CalculatorService`、複雑なデータ変換専用の`DataTransformer`）にロジックを分離することを検討してください。
+  * **インターフェース**:
+      * **最大行数: 100行**
+      * **理由**: インターフェースは「契約」を定義するものであり、その行数が多くなるということは、そのインターフェースが定義する責任が多すぎる（「太りすぎたインターフェース」）ことを示唆します。インターフェース分離の原則（ISP）に従い、複数の小さなインターフェースに分割することを検討してください。
+
+#### 6.2. クラスの粒度に関する補足
+
+上記の行数上限はあくまで目安ですが、これらを超える場合は、\*\*単一責任の原則（SRP）\*\*に違反していないかを最優先で検討してください。
+
+  * **View**: イベントの購読とプロパティの公開以外のロジックは即座にControllerへ移動させる。
+  * **Controller**: 複雑な処理やビジネスロジックは全てModelやサービスに委譲し、自身はフロー制御に徹する。
+  * **Model**: 複数の独立したビジネスロジックや異なる種類のデータ操作が含まれていないかを確認し、必要に応じて新しいクラスとして分割する。例えば、`OrderModel`が注文データの管理と顧客データの管理の両方を行っている場合、`CustomerModel`を別途作成して分割します。
+  * **ユーティリティクラス/サービス**: 汎用的なメソッドを持つユーティリティクラス（例: `DateTimeConverter`）も、関連性の高い機能でまとめるようにし、不必要なほど多機能にならないよう注意します。
+
+#### 6.3. 肥大化を防ぐためのチェックポイント
+
+  * **メソッドの長さ**: 1つのメソッドが長くなりすぎていないか（最大で50行程度を目安）。長すぎる場合は、サブメソッドに分割できないか検討する。
+  * **クラスの責任**: そのクラスが、なぜ変更されるのか？ その理由が複数ある場合は、責任を分割できないか検討する。
+  * **依存関係**: 依存している他のクラスが多すぎないか？ 多すぎる場合は、クラスが多すぎる責任を持っているか、適切な抽象化がされていない可能性がある。
+
+これらのガイドラインを守ることで、各クラスの責務が明確になり、コードの見通しが良くなるため、バグの特定や機能追加・変更が格段に容易になります。
+
+-----
+
+
+## 7\. まとめ
 
 本プロジェクトでは、従来の Windows Forms 開発における課題を克服し、大規模なチーム開発を成功させるために、SOA、データオリエンテッド、MVC、SOLID の原則を導入します。
 
