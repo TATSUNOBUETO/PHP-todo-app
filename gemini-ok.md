@@ -38,7 +38,38 @@
           * **O**pen/Closed Principle (オープン/クローズドの原則): クラスは拡張に対してオープンであり、修正に対してクローズであるべき。
           * **L**iskov Substitution Principle (リスコフの置換原則): 基底クラスのインスタンスを派生クラスのインスタンスで置き換えられるべき。
           * **I**nterface Segregation Principle (インターフェース分離の原則): クライアントは利用しないインターフェースに依存すべきではない。
-          * **D**ependency Inversion Principle (依存性逆転の原則): 高レベルモジュールは低レベルモジュールに依存すべきではなく、両方とも抽象に依存すべき。抽象は詳細に依存すべきではなく、詳細は抽象に依存すべき。
+          * **D**ependency Inversion Principle (依存性逆転の原則): 高レベルモジュールは低レベルモジュールに依存すべきではなく、両方とも抽象に依存すべき。抽象は詳細に依存すべきではなく、詳細は抽象に依存すべき。           
+     * **(重要)D: 依存性逆転の原則 (Dependency Inversion Principle)**
+          * **「具体的な実装に依存せず、抽象（インターフェース）に依存する」**
+          * ** これは「**依存性の注入 (Dependency Injection - DI)**」というテクニックで実現します。
+   
+          * **悪い例 👎**: Controllerが、内部でViewクラスを`new`して生成する。
+        ```csharp
+        public class ProductController
+        {
+            private ProductView _view;
+            public ProductController()
+            {
+                // Controllerが具象クラスであるProductViewを直接知ってしまっている (密結合)
+                this._view = new ProductView();
+            }
+        }
+        ```
+        * **良い例 👍**: Controllerは、外部から作られたViewのインスタンスをコンストラクタで受け取る（注入される）。
+        ```csharp
+        public class ProductController
+        {
+            private readonly IProductView _view; // 具象ではなくインターフェースに依存
+            private readonly IProductModel _model;
+
+            // コンストラクタで、必要なインスタンスを外部から受け取る (DI)
+            public ProductController(IProductView view, IProductModel model)
+            {
+                this._view = view;
+                this._model = model;
+            }
+        }
+        ```
       * **なぜ SOLID を取り入れるのか？**: 従来の開発では、クラスが複数の責任を持ったり、変更のたびに既存のコードを修正する必要があったりしました。SOLID 原則を適用することで、クラスの凝集度を高め、結合度を低く保ち、システムの柔軟性と保守性を向上させます。特に、各サービスの業務画面のように、独立した機能を持つ部分では、SOLID 原則を意識した設計が重要になります。
 
 -----
@@ -120,68 +151,23 @@
       * アプリケーション全体のステータス情報（フッターに表示する処理結果、状態など）
       * これらのデータは `AppModel` に集約し、一元的に管理します。
       * **なぜここまでデータオリエンテッドにするのか？**: これらのデータはアプリケーションの起動から終了まで一貫して利用され、様々な画面や機能から参照・更新される可能性があります。データオリエンテッドに管理することで、データの整合性を保ち、どこからでも最新のデータにアクセスできるようにします。また、データ変更時の通知メカニズムを設けることで、UIの自動更新なども容易になります。
-      * **良い例 (AppModel の一部)**:
-        ```csharp
-        // Models/AppModel.cs
-        public class AppModel : INotifyPropertyChanged
-        {
-            public event PropertyChangedEventHandler PropertyChanged;
+      アプリケーション全体で共有する必要がある情報（状態）を、一つのオブジェクトに集約して管理する考え方です。
+      本プロジェクトでは、`AppModel` というクラスがその役割を担います。
 
-            private UserInfo _currentUser;
-            public UserInfo CurrentUser
-            {
-                get => _currentUser;
-                set
-                {
-                    if (_currentUser != value)
-                    {
-                        _currentUser = value;
-                        OnPropertyChanged(nameof(CurrentUser));
-                    }
-                }
-            }
-
-            private Dictionary<string, List<string>> _userPermissions;
-            public Dictionary<string, List<string>> UserPermissions
-            {
-                get => _userPermissions;
-                set
-                {
-                    if (_userPermissions != value)
-                    {
-                        _userPermissions = value;
-                        OnPropertyChanged(nameof(UserPermissions));
-                    }
-                }
-            }
-
-            private string _footerMessage;
-            public string FooterMessage
-            {
-                get => _footerMessage;
-                set
-                {
-                    if (_footerMessage != value)
-                    {
-                        _footerMessage = value;
-                        OnPropertyChanged(nameof(FooterMessage));
-                    }
-                }
-            }
-
-            protected virtual void OnPropertyChanged(string propertyName)
-            {
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            }
-        }
-
-        public class UserInfo
-        {
-            public string UserId { get; set; }
-            public string DisplayName { get; set; }
-            // 他のユーザー情報
-        }
-        ```
+      ```csharp
+      // AppModel.cs (共通モデル)
+      public class AppModel
+      {
+          // ログインしたユーザー情報
+          public UserInfo CurrentUser { get; set; }
+      
+          // ユーザーが持つ権限情報
+          public AuthorizationInfo Authorizations { get; set; }
+      
+          // アプリケーションの状態 (例: サーバーとの接続状態など)
+          public AppStatus Status { get; set; }
+      }
+      ```
 
   * **AppModel のデータ利用**:
 
@@ -189,49 +175,6 @@
           * ログイン成功後、認証情報を `AppModel` に格納します。
           * `AppModel` から保有権限を取得し、それに基づいてサイドパネルのメニューや各サービストップのメイン画面を**動的に生成**します。これにより、ユーザーの権限に応じたUIを柔軟に提供できます。
           * ヘッダーパネルの画面名、認証・認可の表示、フッターパネルの状態や処理結果表示も `AppModel` の情報を参照して行います。各画面からこれらの情報を `AppModel` 経由で更新することで、統一された表示が可能です。
-      * **良い例 (TopUserControl が AppModel を参照する例)**:
-        ```csharp
-        // Views/TopUserControl.cs
-        public partial class TopUserControl : UserControl
-        {
-            private readonly AppModel _appModel;
-
-            public TopUserControl(AppModel appModel)
-            {
-                InitializeComponent();
-                _appModel = appModel;
-                _appModel.PropertyChanged += AppModel_PropertyChanged;
-                UpdateUIFromAppModel(); // 初期表示
-
-                // フッターメッセージを更新する例
-                // _appModel.FooterMessage = "アプリケーション起動中...";
-            }
-
-            private void AppModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
-            {
-                if (e.PropertyName == nameof(AppModel.CurrentUser) || e.PropertyName == nameof(AppModel.UserPermissions))
-                {
-                    UpdateHeaderPanel();
-                    UpdateSidePanelMenu(); // 権限に応じてメニューを更新
-                }
-                else if (e.PropertyName == nameof(AppModel.FooterMessage))
-                {
-                    lblFooterMessage.Text = _appModel.FooterMessage;
-                }
-            }
-
-            private void UpdateHeaderPanel()
-            {
-                // ヘッダーパネルの表示を更新 (例: lblUserName.Text = _appModel.CurrentUser?.DisplayName;)
-            }
-
-            private void UpdateSidePanelMenu()
-            {
-                // _appModel.UserPermissions を元に、動的にメニューを生成・表示
-                // 例: _appModel.UserPermissions["InventoryService"].Contains("Manager") ならば「在庫管理（管理者）」メニューを表示
-            }
-        }
-        ```
 
 ### 3.2. MVC の適用範囲と実装方針
 
@@ -246,6 +189,9 @@
           * プロパティは基本的に、デザイン時に設定可能なもの、または外部からデータを受け取るためのプレースホルダーとして定義します。
           * **イベントハンドラは View に直接定義しません**。View で発生したユーザー操作イベントは、Controller に委譲するメカニズム（例えば、デリゲートやインターフェース、または外部から注入されたコマンドオブジェクト）を介して通知します。
           * View は自身の状態を保持せず、Controller から渡されたデータを表示する「受け身」の存在とします。
+          * インターフェースを実装する**: Controllerとの疎結合を保つため、必ずインターフェースを定義し、実装します。
+          * プロパティを公開する**: ControllerがViewの表示を操作したり、入力値を取得したりするために、コントロールと連動するプロパティをインターフェース経由で公開します。
+          * イベントは`Action`や`Func`で公開する**: ボタンクリックなどのイベントは、Controllerが処理を注入できるように`Action`型のプロパティとして公開します。
       * **悪い例 (View にロジックがある)**:
         ```csharp
         // Views/MyView.cs (悪い例: イベントハンドラ内で直接ロジック処理)
@@ -262,21 +208,67 @@
         }
         ```
       * **良い例 (View がイベントを外部に公開する)**:
-        ```csharp
-        // Views/MyView.cs (良い例: View はイベントを外部に公開し、自身では処理しない)
-        public partial class MyView : UserControl
-        {
-            public event EventHandler ProcessButtonClicked;
-            public string ProductId { get => txtProductId.Text; set => txtProductId.Text = value; }
-            public string ProductName { get => lblProductName.Text; set => lblProductName.Text = value; }
+       * 【例】`IProductView.cs`**:
+       ```csharp
+       public interface IProductView
+       {
+           // Controllerから設定/取得するためのプロパティ
+           string ProductName { get; set; }
+           string Quantity { get; set; }
+           object DataSource { set; } // DataGridView用
+       
+           // Controllerに処理を注入させるためのイベントハンドラ
+           event Action SearchEvent;
+           event Action AddEvent;
+       
+           // ControllerからViewを直接操作するためのメソッド
+           void ShowMessage(string message);
+       }
+       ```
+       
+     *【例】`ProductView.cs` (コードビハインド)**
 
-            public MyView()
-            {
-                InitializeComponent();
-                btnProcess.Click += (s, e) => ProcessButtonClicked?.Invoke(this, EventArgs.Empty);
-            }
-        }
-        ```
+     ```csharp
+     public partial class ProductView : UserControl, IProductView
+     {
+         public event Action SearchEvent;
+         public event Action AddEvent;
+
+         public ProductView()
+         {
+             InitializeComponent();
+     
+             // Viewのイベントをインターフェースのイベントに紐づける
+             this.searchButton.Click += (s, e) => SearchEvent?.Invoke();
+             this.addButton.Click += (s, e) => AddEvent?.Invoke();
+         }
+     
+         // --- IProductViewの実装 ---
+     
+         public string ProductName
+         {
+             get => productNameTextBox.Text;
+             set => productNameTextBox.Text = value;
+         }
+     
+         public string Quantity
+         {
+             get => quantityTextBox.Text;
+             set => quantityTextBox.Text = value;
+         }
+     
+         public object DataSource
+         {
+             set => productDataGridView.DataSource = value;
+         }
+    
+         public void ShowMessage(string message)
+         {
+             // ここではフッターへの通知を想定 (実際にはMainForm経由で行う)
+             MessageBox.Show(message);
+         }
+     }
+     ```
 
   * **Model (データとビジネスロジック)**:
 
@@ -303,11 +295,16 @@
         ```
       * **良い例 (Model は純粋なビジネスロジックとデータアクセス)**:
         ```csharp
-        // Models/ProductModel.cs (良い例: Model はデータとビジネスロジックに集中)
-        public class ProductModel
-        {
-            private readonly IProductApiService _productApiService; // 依存性注入
 
+        // Models/IProductModel (依存性逆転の原則)
+        public interface IProductModel
+        {
+            Task<ProductDto> GetProductByIdAsync(string id);
+        }
+        
+        // Models/ProductModel.cs (良い例: Model はデータとビジネスロジックに集中)
+        public class ProductModel : IProductModel
+        {
             public ProductModel(IProductApiService productApiService)
             {
                 _productApiService = productApiService;
@@ -330,12 +327,6 @@
             {
                 return product.Price * (1 - discountRate);
             }
-        }
-
-        // Models/Interfaces/IProductApiService.cs (依存性逆転の原則)
-        public interface IProductApiService
-        {
-            Task<ProductDto> GetProductByIdAsync(string id);
         }
 
         // Models/Dtos/ProductDto.cs (APIレスポンスのデータ構造)
@@ -402,10 +393,10 @@
         public class ProductController
         {
             private readonly IProductView _view; // 良い: インターフェースに依存
-            private readonly ProductModel _model; // 良い: Model をコンストラクタで受け取る
+            private readonly IProductModel _model; // 良い: インターフェースに依存
             private readonly AppModel _appModel; // 良い: 共通AppModelも注入
 
-            public ProductController(IProductView view, ProductModel model, AppModel appModel)
+            public ProductController(IProductView view, IProductModel model, AppModel appModel)
             {
                 _view = view;
                 _model = model;
