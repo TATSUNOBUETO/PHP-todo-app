@@ -207,7 +207,7 @@
             }
         }
         ```
-      * **良い例 (View がイベントを外部に公開する)**:
+      * **良い例　インターフェースの定義 (View がイベントを外部に公開する)**:
        * 【例】`IProductView.cs`**:
        ```csharp
        public interface IProductView
@@ -226,7 +226,7 @@
        }
        ```
        
-     *【例】`ProductView.cs` (コードビハインド)**
+     *【例】インターフェースを継承したViewの実装クラス**
 
      ```csharp
      public partial class ProductView : UserControl, IProductView
@@ -294,6 +294,7 @@
         }
         ```
       * **良い例 (Model は純粋なビジネスロジックとデータアクセス)**:
+        *【例】インターフェースを定義したモデルクラスと実装クラス
         ```csharp
 
         // Models/IProductModel (依存性逆転の原則)
@@ -302,14 +303,9 @@
             Task<ProductDto> GetProductByIdAsync(string id);
         }
         
-        // Models/ProductModel.cs (良い例: Model はデータとビジネスロジックに集中)
+        // Models/ProductModel.cs (良い例: Modelはデータとビジネスロジックに集中)
         public class ProductModel : IProductModel
         {
-            public ProductModel(IProductApiService productApiService)
-            {
-                _productApiService = productApiService;
-            }
-
             public async Task<Product> GetProductAsync(string productId)
             {
                 // REST API 呼び出しはここで完結し、結果を返す
@@ -433,15 +429,6 @@
             }
 
             public UserControl GetViewControl() => (UserControl)_view; // View を返す（UserControlは共通インターフェースの基底クラス）
-        }
-
-        // Views/Interfaces/IProductView.cs (View のインターフェース)
-        public interface IProductView
-        {
-            event EventHandler ProcessButtonClicked;
-            string ProductId { get; set; }
-            string ProductName { get; set; }
-            // 他のUI操作を抽象化するプロパティやメソッド
         }
         ```
 
@@ -627,36 +614,18 @@
                 switch (screenId)
                 {
                     case "InventoryMain":
-                        // InventoryController は IInventoryView, ProductModel, AppModel を依存性として持つ
-                        var inventoryController = _serviceProvider.GetService<InventoryController>();
-                        newView = inventoryController.GetViewControl();
-                        _appModel.FooterMessage = "在庫管理画面が表示されました。";
-                        break;
-                    case "PersonnelDetail":
-                        var personnelController = _serviceProvider.GetService<PersonnelController>();
-                        newView = personnelController.GetViewControl();
-                        _appModel.FooterMessage = "人事詳細画面が表示されました。";
+        　　　　　　　　　//View
+                        var inventoryView = new InventoryTopView();
+                        //Model
+                        var inventoryModel = new InventoryModel();
+                        // Controllerを生成することで、ViewとModelが紐づく
+                        new InventoryTopController(inventoryView, inventoryModel,_appModel); 
                         break;
                     // 他の画面IDに対応するControllerの生成
                     default:
                         _appModel.FooterMessage = $"エラー: 不明な画面ID {screenId} です。";
                         return;
                 }
-
-                if (newView != null)
-                {
-                    newView.Dock = DockStyle.Fill;
-                    _mainPanel.Controls.Add(newView);
-                    // ヘッダーパネルの画面名を更新 (AppModel経由で)
-                    _appModel.CurrentScreenName = GetScreenName(screenId); // AppModelに CurrentScreenName プロパティを追加
-                }
-            }
-
-            private string GetScreenName(string screenId)
-            {
-                // メニューデータから画面名を取得するロジック
-                // 例: return _appModel.Menus.FirstOrDefault(m => m.ScreenId == screenId)?.Name;
-                return $"画面名: {screenId}"; // 仮
             }
         }
         ```
