@@ -1,9 +1,9 @@
 <?php
 // /includes/db.php
-$host = 'localhost';
-$db   = '';
-$user = '';
-$pass = '';
+$host = 'db';
+$db   = 'todo-app';
+$user = 'admin';
+$pass = 'admin_pass';
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";

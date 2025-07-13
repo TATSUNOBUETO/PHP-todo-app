@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # Webサーバー（Apache + PHP）
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: my_project_web
+    ports:
+      - "8080:80"
+    volumes:
+      # プロジェクトルート全体をマウントするように変更
+      - .:/var/www/html
+    depends_on:
+      - db
+    networks:
+      - my_project_network
+
+  # データベース（MariaDB）
+  db:
+    image: mariadb:10.5
+    container_name: my_project_db
+    environment:
+      # データベースのユーザーとパスワードを設定
+      MARIADB_DATABASE: todo-app
+      MARIADB_USER: admin
+      MARIADB_PASSWORD: admin_pass
+      # ルートユーザーのパスワードを追加
+      MARIADB_ROOT_PASSWORD: my_root_password
+    volumes:
+      - ./your_database.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data:/var/lib/mysql
+    networks:
+      - my_project_network
+
+  # phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: my_project_phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: admin
+      PMA_PASSWORD: admin_pass
+    depends_on:
+      - db
+    networks:
+      - my_project_network
+
+# ボリュームとネットワークの定義
+volumes:
+  db_data:
+
+networks:
+  my_project_network:
+    driver: bridge
