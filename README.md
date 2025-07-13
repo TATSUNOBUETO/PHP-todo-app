@@ -1,5 +1,7 @@
 
 # TODOアプリ
+
+![Apache](https://img.shields.io/badge/Apache-D22128?style=for-the-badge&logo=apache&logoColor=white) ![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white) ![MariaDB](https://img.shields.io/badge/MariaDB-003545?style=for-the-badge&logo=mariadb&logoColor=white) ![phpMyAdmin](https://img.shields.io/badge/phpMyAdmin-6C8A97?style=for-the-badge&logo=phpmyadmin&logoColor=white) ![Docker Compose](https://img.shields.io/badge/Docker%20Compose-00445C?style=for-the-badge&logo=docker&logoColor=white)
 -----
 ## プロジェクト概要
 
