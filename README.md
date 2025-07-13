@@ -23,7 +23,7 @@
 
 ```bash
 git clone https://github.com/TATSUNOBUETO/PHP-todo-app.git
-cd あなたのリポジトリ名
+cd PHP-todo-app
 ```
 
 
